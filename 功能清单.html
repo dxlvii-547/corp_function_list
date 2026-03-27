@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>对公业务管理中台 | 功能全景导航</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 24px 20px;
+            color: #1a2634;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0b2b3b 0%, #123e4e 100%);
+            color: white;
+            padding: 24px 28px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            font-size: 1.9rem;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+
+        .stats-badge {
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            margin-top: 12px;
+        }
+
+        .stats-section {
+            background: #ffffff;
+            padding: 20px 28px;
+            border-bottom: 1px solid #eef2f6;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 28px;
+            justify-content: space-between;
+        }
+        .stats-text {
+            flex: 2;
+            min-width: 200px;
+        }
+        .stats-text h3 {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            color: #1f4e6e;
+            font-size: 1.2rem;
+        }
+        .stats-text p {
+            margin: 0;
+            color: #5f7d95;
+            font-size: 0.9rem;
+        }
+        .pie-chart-container {
+            flex: 1;
+            min-width: 220px;
+            max-width: 280px;
+            background: #fafcff;
+            border-radius: 24px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        canvas#levelPieChart {
+            max-height: 200px;
+            width: 100%;
+        }
+        @media (max-width: 680px) {
+            .stats-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .pie-chart-container {
+                align-self: center;
+                width: 100%;
+                max-width: 260px;
+            }
+        }
+
+        .toolbar {
+            padding: 16px 28px;
+            background: #ffffff;
+            border-bottom: 1px solid #e9edf2;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 260px;
+            background: #f8f9fc;
+            border: 1px solid #e2e6ec;
+            border-radius: 48px;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-box span {
+            color: #7f8c8d;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #2c6e9e;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 30px;
+            transition: 0.2s;
+            background: #eef2f7;
+        }
+
+        .clear-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .total-count {
+            font-size: 0.85rem;
+            background: #eef2f9;
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .nav-tabs {
+            background: #ffffff;
+            padding: 12px 28px;
+            border-bottom: 1px solid #e9edf2;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .nav-tabs-inner {
+            display: inline-flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            display: inline-block;
+            background: #f0f3f8;
+            color: #1e4663;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav-btn:hover {
+            background: #e2e9f2;
+            transform: translateY(-1px);
+        }
+
+        .groups-container {
+            padding: 20px 28px 32px 28px;
+            background: white;
+        }
+
+        .function-group {
+            margin-bottom: 48px;
+            scroll-margin-top: 80px;
+        }
+
+        .group-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #0f3b4c;
+            border-left: 5px solid #1e88b0;
+            padding-left: 18px;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .group-title small {
+            font-size: 0.8rem;
+            font-weight: normal;
+            background: #eef2f9;
+            padding: 2px 10px;
+            border-radius: 30px;
+            color: #3c6e8f;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid #ecf0f3;
+            background: white;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 800px;
+        }
+
+        .data-table th {
+            background: #f8fafd;
+            color: #1e3a4b;
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: top;
+            line-height: 1.4;
+        }
+
+        .data-table tr:hover td {
+            background-color: #fafcff;
+        }
+
+        .terminal-badge {
+            display: inline-block;
+            background: #e9f0f5;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #1c5a7a;
+            margin: 2px 4px 2px 0;
+            white-space: nowrap;
+        }
+
+        .terminal-badge.mobile {
+            background: #e3f0e8;
+            color: #2a6b47;
+        }
+
+        .terminal-badge.pc {
+            background: #e3eaf9;
+            color: #2c5282;
+        }
+
+        .func-desc {
+            max-width: 480px;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8a99aa;
+            font-size: 1rem;
+            background: #fefefe;
+            border-radius: 28px;
+        }
+
+        footer {
+            padding: 16px 28px;
+            border-top: 1px solid #e9edf2;
+            font-size: 0.75rem;
+            color: #6c7a89;
+            background: #fefefe;
+            text-align: center;
+        }
+
+        @media (max-width: 680px) {
+            body {
+                padding: 16px 12px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .group-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏦 对公业务管理中台 · 全景功能导航</h1>
+        <p>经营管理 | 客户管理 | 数据精益化 | 工作台 | 新客引流 | 流程管理 | 员工赋能 | 系统安全基线</p>
+        <div class="stats-badge" id="liveCount">加载中...</div>
+    </div>
+
+    <div class="stats-section">
+        <div class="stats-text">
+            <h3>📊 功能模块分布</h3>
+            <p>基于一级功能分类统计功能项数量，直观展示各模块占比。</p>
+            <div style="font-size:0.8rem; color:#4f6f8f; margin-top:6px;">* 饼图展示全量数据，搜索不影响统计</div>
+        </div>
+        <div class="pie-chart-container">
+            <canvas id="levelPieChart" width="300" height="180" style="max-width:100%; height:auto;"></canvas>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="搜索功能名称 / 说明 / 终端类型 ..." autocomplete="off">
+        </div>
+        <button id="clearFiltersBtn" class="clear-btn">✖ 重置筛选</button>
+        <div class="total-count" id="resultCount">共 0 项功能</div>
+    </div>
+
+    <div class="nav-tabs" id="navTabs" style="display: none;">
+        <div class="nav-tabs-inner" id="navInner"></div>
+    </div>
+
+    <div class="groups-container" id="groupsContainer">
+        <div class="empty-message">正在加载功能清单...</div>
+    </div>
+    <footer>数据源自《2026年第9次行长办公会议题X—附件2：对公业务管理中台功能清单》 — 点击导航快速定位，支持搜索筛选</footer>
+</div>
+
+<script>
+    // ======================= 原始数据（基于用户提供表格提取） =======================
+    const rawTableLines = [
+        "| 经营管理 | 经营目标管理 | 经营计划维护 | 经营计划制定维护、任务下发、检视调整 | PC |",
+        "|  |  | 经营计划承接管理-分解计划 | 经营计划承接分解、审批、检视调整 | PC |",
+        "|  |  | 经营计划承接管理-下发计划 |  | PC |",
+        "|  |  | 经营计划承接管理-计划检视调整 |  | PC |",
+        "|  | 指标管理 | 经营指标分类维护 | 经营业绩指标的分类维护和管理 | PC |",
+        "|  |  | 经营指标定义维护 | 经营业绩指标定义管理 | PC |",
+        "|  |  | 经营指标来源归则维护 | 经营业绩指标数据归集规则维护 | PC |",
+        "|  |  | 经营指标来源归集字段维护 | 经营业绩指标数据归集字段维护 | PC |",
+        "|  | 经营分析管理 | 经营进度展示 | 机构与员工经营完成进度展示，对接管会系统数据，展示对公板块效益贡献度（如EVA），具体数据、趋势 | PC,移动端 |",
+        "|  |  | 机构经营考核排名 | 机构与员工经营考核排名与对比分析 | PC,移动端 |",
+        "|  |  | 员工经营考核排名 |  | PC,移动端 |",
+        "|  |  | 各机构存贷款预测统计 | 支持创建表单，导入年度KPI计划任务目标，同步年度/季度/月存贷款规模数据，存款：基期时点数、存款进款明细、存款出款明细、到期产品承接情况，分支行在线填写预测情况（包含即将到期产品情况落实以及进出款预测）；贷款：基期时点数、投放量、贷款到期承接及提前还款情况、统计部门进行业务落实，确定最终预测数据。查询导出权限按照总分支层级下放，支持自主勾选分支机构，同时可配置分支机构分组 | PC |",
+        "|  |  | 贷款综合贡献度分析 | 1.内置贷款综合贡献度计算器，根据配置规则进行贡献度计算；<br>2.投后跟踪：贷款投放后，同步OA系统利率定价审批单，根据行内贷款利率申请中客户承诺相关事宜进行事项跟踪并推送待办任务给相应经办人完成利率定价后的关联业务落实统计；<br>3.业务跟踪：根据反馈的业务落实统计情况定位到相应具体业务进行业务标记，参与关联对公客户的综合贡献度统计计算。 | PC |",
+        "| 客户管理 | 客户搜索 | 简单条件搜索 | 使用客户三要素、客户账户号进行客户搜索 | PC,移动端 |",
+        "|  |  | 扩展条件搜索 | 包括客户信息、注册地、数据加工指标、客户标签条件、日均存款、交易笔数等，可组合搜索 | PC |",
+        "|  | 客户申领、移交、托管 | 客户申领 | 申领客户 | PC |",
+        "|  |  | 客户移交&托管审批 | 我的管户移交 | PC |",
+        "|  |  |  | 我的管户托管 | PC |",
+        "|  | 客户分配&调整 | 新增分配关系 | 将客户分配给的客户经理，支持批量分配和名单匹配分配 | PC |",
+        "|  |  | 移除分配关系 | 将已经分配客户经理的客户收回 | PC |",
+        "|  |  | 管户关系修改 | 管户关系修改 | PC |",
+        "|  | 客户归属机构变更 | 客户归属机构修改 | 客户归属机构修改 | PC |",
+        "|  |  | 客户归属机构调整审批 | 客户归属机构调整审批 | PC |",
+        "|  | 集团客户管理 | 设置集团客户属性 | 设置客户的集团客户属性 | PC |",
+        "|  |  | 添加集团成员 | 向集团客户添加成员客户 | PC |",
+        "|  |  | 移除集团成员、不认定集团成员 | 从已有的集团成员中移除成员关系 | PC |",
+        "|  |  | 集团关系审批 | 审批由客户经理等营销人员提交的集团关系维护申请 | PC |",
+        "|  |  | 集团客户视图 | 集团客户视图 | PC |",
+        "|  | 潜在客户管理 | 潜在客户信息新建及批量导入 | 通过文本文件模板批量导入潜在客户资源 | PC |",
+        "|  |  | 潜在客户营销关系设定 | 设置潜在客户日常跟踪维护的营销人员，绑定营销关系 | PC |",
+        "|  |  | 潜在客户营销关系调整 | 调整潜在客户的日常跟踪营销关系，或收回已设定营销关系的潜在客户资源 | PC |",
+        "|  |  | 潜在客户管理-查询 |  | PC,移动端 |",
+        "|  | 客户信息&分析数据展示 | 基本信息展示 | 展示客户行内基础信息、外部数据引入的工商注册、企业关键人、分支机构、企业股东信息 | PC,移动端 |",
+        "|  |  | 客户标签展示 | 展示客户基础属性、行业资质、经营状况、风险洞察、关联关系、客户价值、管理属性、业务属性、行为偏好重要的定性特征标签 | PC,移动端 |",
+        "|  |  | 关联人信息 | 展示客户关键联系人信息，同步ECIF法人、经办信息及联系方式（脱敏） | PC,移动端 |",
+        "|  |  | 价值指标展示 | 展示客户存、贷、中间业务产品创利指标、综合价值评价、贡献度、忠诚度价值指标 | PC,移动端 |",
+        "|  |  | 持有业务产品展示 | 展示客户现有及历史持有的对公存款、贷款、对公理财、票据贴现、代发业务签约（全渠道）等产品持有概况及汇总指标数据 | PC,移动端 |",
+        "|  |  | 产品明细信息展示 | 展示客户持有的各类产品的明细记录（存贷款账户、签约明细等） | PC,移动端 |",
+        "|  |  | 授信融资信息 | 展示客户的授信融资信息，主要包括客户信贷基本信息、授信总体情况信息、集团风险限额（系统评定及团组会确定金额）、和授信基本信息。 | PC,移动端 |",
+        "|  |  | 中间业务信息 | 客户中间业务收入信息，系统可以展示客户中收趋势、中收结构、中收明细信息（暂无法关联原业务） | PC,移动端 |",
+        "|  |  | 经营信息展示 | 展示客户的行政许可、招投标、对外投资信息 | PC,移动端 |",
+        "|  |  | 结算信息 | 展示客户的结算信息的趋势、渠道发生的业务量（银企直连、柜面、网银、手机银行）、交易对手分析等。 | PC,移动端 |",
+        "|  |  | 国际业务信息 | 客户的国际业务信息 | PC,移动端 |",
+        "|  |  | 财务信息 | 客户关键财务指标信息展示 | PC,移动端 |",
+        "|  |  | 风险信息展示 | 展示客户的贷款风险、重大违法、欠税信息、司法诉讼、司法判决、行政处罚、失信被执行、反洗钱风险等相关风险信息 | PC,移动端 |",
+        "|  |  | 关系图谱展示 | 展示客户的集团关系、担保关系、自然人任职关系、供应链关系、产业上下游关系数据形成的关系图谱 | PC,移动端 |",
+        "|  |  | 新闻&舆情信息展示 | 展示客户的企业并购、重大披露、负面新闻、政府奖励等新闻及舆情信息 | PC,移动端 |",
+        "|  |  | 客户服务信息 | 展示针对该客户组织的商机线索数、接触服务数、接触明细记录 | PC,移动端 |",
+        "|  |  | 客户管户信息 | 展示客户的管理人及变动关系 | PC,移动端 |",
+        "|  |  | 客户资金流向分析 | 分析客户所有账务性交易（支持剔除结息、付息）以及存款资金在同行非同名客户、他行账户之间的流动情况，按资金额度、日期区间、同业机构、交易对手所在区域、交易用途维度进行分析，且支持笔数、金额、借贷方向、以及交易时间等多维度展示 | PC,移动端 |",
+        "|  | 客户关键人信息维护 | 添加关键人 |  | PC,移动端 |",
+        "|  |  | 维护客户关键人联系信息 |  | PC,移动端 |",
+        "|  | 关联关系维护 | 新增客户关联关系信息 | 提供维护界面，对客户与相关对公及零售客户的关系信息（包括集团关联关系,集团关系维护后需要审批）进行维护，维护的数据作为手工标签数据来源形成手工标签 | PC,移动端 |",
+        "|  |  | 修改客户关联关系信息 |  | PC,移动端 |",
+        "|  |  | 删除客户关联关系信息 |  | PC,移动端 |",
+        "|  | 客户标签管理 | 标签体系管理 | 采用参数化管理客户标签体系、标签和标签的阈值及权重，作为组织级的过程资产，后续可以的标签的上下架进行流程化的管理，具备参照完整性。同时支持存量客户根据客户信息自动打标签以及全量标签自动更新，保证标签的时效性及有效性。 | PC |",
+        "|  | 账户管理 | 基础账户管理 | 设有效标准，推送“升级路径图”及临界客户达标提醒 | PC,移动端 |",
+        "|  |  | 不动户管理 | 分阶段唤醒，标记“复苏标签”追踪激活成效 | PC,移动端 |",
+        "|  |  | 账户管理关系维护 | 账户管理关系分配、业绩分成规则配置 | PC |",
+        "|  | 典型客群管理 | 客群维护 | 实现典型客群的建立、删除，名单的筛选； | PC |",
+        "|  |  | 客群分析 | 定义典型客群，选定相应的指标进行规模和趋势的客群画像分析，科技类/小微类/社区类/集团类/机构类/绿色金融类/科创类等 | PC |",
+        "|  | 客户接触 | 客户拜访 | 根据客户属性生成拜访清单（战略客户/重要客户/商机关键人等）、制定拜访计划 | PC,移动端 |",
+        "|  |  | 客户面访 | 客户面访登记，拜访轨迹可视化 | PC,移动端 |",
+        "|  |  | 接触记录检视 | 1、查看客户经理与客户接触概况和明细信息(管户决策层使用）<br>2、客户经理查看个人与客户的接触记录统计数据<br>3、单客户可查看该客户各渠道（包括线上客户渠道）的所有接触记录 | PC,移动端 |",
+        "| 数据精益化管理 | 数据管理 | 数据对接 | 对接行内对公数据管理中台上下游系统，完善对公业务数据源 | PC |",
+        "|  |  | 数据加工 | 对公业务数据根据业务机构、行业归属、资金用途、业务特色等进行分级分类并打标签 | PC |",
+        "|  | 数据应用 | 数据看板 | 根据核心业务、客户、机构、流程等多个维度进行对公业务数据展示，支持多维度数据筛选与展示按业务品种（贸易融资、固贷、项目贷、流贷等）、利率区间、行业、企业规模、担保类型、控股类型等多维度，对存款和贷款数据进行筛选与展示；各维度可灵活组合筛选，同时结合行内外部数据根据地域与客户分层维度根据地域维度展示客户总览，且支持下钻查看客户信息。 | PC |",
+        "| 工作台 | 首页 | 前十大客户展示 | 根据机构归属展示前十大存款、贷款、AUM、进出款客户的排名及明细 | PC |",
+        "|  |  | 贷款逾期明细 | 根据管户关系以及客户贷款还款信息推送贷款逾期明细 | PC |",
+        "|  |  | 贷款欠息明细 | 根据管户关系以及客户贷款还款信息推送贷款欠息明细 | PC |",
+        "|  |  | 贷款分期还款明细 | 根据管户关系以及客户贷款还款计划推送贷款还款明细 | PC |",
+        "|  |  | 存款流失明细 | 根据客户半年内的跨行同名转出交易信息生成存款流失客户名单以及交易数据统计 | PC |",
+        "|  |  | 消息提醒 | 定期轮循账户信息表查询账户信息状态，接受各个支付系统大额动账推送，根据管户关系将相关账户的异常状态（例如冻结，待细化）、客户生日提醒（法人、财务、经办生日祝福发送确认）、欠本、欠息提醒（财务关键人、关联人短信发送确认）大额动账信息、客户还款提醒、客户还款逾期提醒、存款产品利率变动、协定存款、通知存款、年检、代发异常变动（规则由业务落地分支行配置）、账户证照等进行消息推送提醒，消息提醒在用户端根据不同消息种类分进行分类推送。 | PC,移动端 |",
+        "|  |  | 待办事项推送跟踪 | 针对即将到期产品根据管户关系推送客户产品（存款、贷款等）到期提醒以及同步信贷系统近期提前还款信息生成对应待办任务进行推送，客户经理与客户沟通落实即将到期产品或提前还款后续情况并在任务流程中提交反馈结果，办结任务。待办事项推送在用户端根据不同事项种类进行分类推送。 | PC,移动端 |",
+        "|  |  | 工作日历 | 客户触达预约任务等，首页登入后弹出显示、含日程计划创建、修改、删除、根据管户关系生成提前30天还款提醒日程 | PC,移动端 |",
+        "|  | 业绩检视 | 经营指标完成进度概览 | 查看经营考核指标（机构级、员工级）的完成进度（指标数值+进度图），客户结构、经营KPI指标、业绩目标进度、业绩检视、业绩排名等，准实时动态更新 | PC,移动端 |",
+        "|  |  | 经营指标明细分析 | 查看经营考核指标（机构级员工级）的明细数值和变动趋势（指标数值、比较数据、趋势图），准实时动态更新 | PC,移动端 |",
+        "|  |  | 考核业绩排名分析 | 查看辖内机构、团队、员工的经营考核指标明细值排名和考核得分排名（考核数值、排名图），准实时动态更新 | PC,移动端 |",
+        "|  | 我的客户 | 我的客户 | 客户价值结构汇总展示，按机构和客户经理，九宫格展示 | PC,移动端 |",
+        "|  |  | 关注客户 | 关注客户，最近在营销或触达的客户收藏夹 | PC,移动端 |",
+        "|  | 我的商机 | 我的商机 | 分配给我的或我抢单的商机汇总数字，支持钻取式查看商机明细，从外部数据获得企业资讯、招投标项目资讯、知识产权初创、资质审批落地、融资信息资讯等角度获得客户相关商机信号，汇聚成商机广场。 | PC,移动端 |",
+        "|  | 系统公告 | 系统公告 | 产品资讯、热销产品、产品到期等；系统公告 | PC,移动端 |",
+        "|  | 我的任务 | 我的任务 | 当前待办营销任务条数，今日新增营销任务条数，今日已触客人数，今日营销任务完成条数。客户触达活动量汇总（电话、短信、面访、沙龙等），客户触达活动量目标、客户实际触达的统计、以及管户客户的覆盖度相关数据展示--用任务监控 | PC,移动端 |",
+        "|  | 工作日志 | 工作日志 | 当日营销触达客户信息登记汇总 | PC,移动端 |",
+        "|  | 快速入口 | 快速入口 | 其他相关业务系统快速入口 | PC,移动端 |",
+        "|  | 信息查询 | 信息查询 | 对接行内关联系统，支持实时多维度查询客户信息（包括不限于客户AUM余额、账务性交易笔数、产品持有数）、账户信息、交易信息、贷款信息、还款计划、业务指标、代扣情况、贷款投放明细、代发明细数据、代发汇总数据、收单签约客户、票据交易信息等。 | PC,移动端 |",
+        "|  | 试算工具 | 贷款利息试算 | 根据贷款业务要素试算一定周期内的贷款逾期利息、应付利息等 | PC,移动端 |",
+        "| 新客引流 | 事件引流管理 | 事件提醒查询 | 查看事件策略库输出的事件提醒记录 | PC,移动端 |",
+        "|  |  | 事件引流分析 | 事件发生、提醒、商机产生与跟踪情况可视化分析 | PC |",
+        "|  | 事件策略管理 | 业务事件类引流策略维护 | 调用事件库决策引擎，维护客户业务事件引流策略规则（资金类、非资金类） | PC |",
+        "|  |  | 客户管理服务类事件策略维护 | 调用事件库决策引擎，维护客户管理与客户服务类事件策略规则（客户维护、客户分配、客户生日、客户拜访服务) | PC |",
+        "|  |  | 日程任务类提醒规则维护 | 维护个人的任务与日程提醒类（代发异常规则）规则 | PC |",
+        "|  | 线索引流管理 | 查询引流线索 | 查询由系统发送的引流线索（引流分析产生线索、事件商机线索（事件库输出））和个人登记的引流商机 | PC,移动端 |",
+        "|  |  | 创建引流线索 | 管理人员人工维护引流线索 | PC,移动端 |",
+        "|  |  | 修改引流线索 |  | PC,移动端 |",
+        "|  |  | 删除引流线索 |  | PC,移动端 |",
+        "|  |  | 引流线索分配 | 引流线索分配给客户经理进行维护跟踪形成商机 | PC,移动端 |",
+        "|  |  | 引流线索抢单 | 由客户经理在商机公共池（分设定商机跟进人的商机）中认领引流线索 | PC,移动端 |",
+        "|  |  | 引流线索收回 | 收回已分配给客户经理进行跟踪的引流线索 | PC |",
+        "|  |  | 引流线索分析 | 分析引流线索的执行状态形成商机分析漏斗，查看商机跟踪记录 | PC |",
+        "|  | 商机名单筛选 | 商机名单管理 | 新企名单（是否自动推送待评估）、项目名单、自定义名单，渠道名单 | PC |",
+        "|  |  | 商机名单筛选界面入口 | 链接客户筛选界面实现名单的筛选 | PC |",
+        "|  |  | 商机名单引用 | 通过引用已有的客群名单导入引流活动客户名单 | PC |",
+        "|  |  | 商机名单手工导入 | 通过文本文件手工导入引流活动客户名单 | PC |",
+        "|  | 商机任务管理 | 商机任务创建 | 1、设定专项活动任务基本信息<br>2、引用名单、设置下发名单<br>3、设置商机策略<br>4、设置任务监控指标 | PC |",
+        "|  |  | 商机任务审批 | 审批商机任务 | PC |",
+        "|  |  | 商机任务下发 | 商机任务按管户规则或自定义规则下发，形成跟踪任务 | PC |",
+        "|  |  | 商机任务认领&退回 | 客户经理自主认领或退回分配到支行的商机任务，其中认领是指自主认领无执行人的任务，退回是由客户经理将个人执行的任务退回到公共池，由支行业务负责人审批 | PC,移动端 |",
+        "|  |  | 商机任务反馈 | 反馈商机任务执行情况&商机任务办结 | PC,移动端 |",
+        "|  | 商机监控分析 | 机构&团队商机执行过程统计 | 监控商机执行过程中的各机构&团队的客户接触服务指标 | PC |",
+        "|  |  | 员工商机执行过程统计 | 监控商机执行过程中的客户经理的客户接触服务指标（客户经理可查看个人的接触服务指标） | PC |",
+        "| 流程管理 | 业务合规监测 | 合规检查清单及流程 | 根据最新监管文件或行内检查要求，支持手工或自动创建合规检查清单，且支持根据检查清单新建合规检查跟踪流程 | PC |",
+        "|  |  | 合规检查流程跟踪 | 支持合规检查流程全流程跟踪以及多节点流转，包括检查结果通知、整改事项分配、整改进度反馈、以及工单状态修改（新建、处理中、已办结等）等功能，流程节点中信息及反馈结果支持手工导出及导入录入或修改 | PC |",
+        "|  | 对公全业务流程管理 | 对公全业务流程审批管理 | 整合各类对公业务（包括不限于集团客户主协办调整、大额进出款报备）审批功能，统一审批流程 | PC |",
+        "|  |  | 项目立项审批 | 支持不同业务的项目审批立项流程，根据业务种类配置不同的录入信息要素模板，可配置多个审批节点，选择相应机构/部门的相关角色作为审批人，同时根据审批流程所处节点推送消息给相应审批人。 | PC,移动端 |",
+        "|  |  | 贷款项目流程管理 | 支持项目储备的全流程跟踪管理及信息同步，支持新建营销储备，需支持通过信贷流水号等信息同步信贷系统关联业务的状态，根据信贷系统业务状态自动更新对公业务管理中台储备项目的状态，营销储备->申报储备->投放储备，并根据信贷系统及票据系统的业务后续办理情况完成对公业务管理中台的信息同步总额度、已放款额度、剩余额度、票据交易信息，T+1更新储备项目的交易信息更新，总额度已全额放款停止更新。所有流程支持按业务种类、贷款投向、管理部门、机构（总、分、支）、状态进行筛选展示。 | PC |",
+        "|  |  | 开户流程跟踪 | 支持开户任务下发分配以及开户流程跟踪，流程分配到经办后，经办人员根据业务办理情况及进度进行录入反馈，根据反馈的业务流水、客户信息和客户号同步查询核心账户信息进行开户状态、进度信息同步 | PC |",
+        "|  | 表单分发及收集汇总 | 表单分发及收集汇总 | 支持创建数据统计表单以及事项反馈表单，表单中单个条目可独立选择对应接收人，表单需支持逐层下发，支持按照总-分-支逐层下发或穿透式下发，数据表单根据填写结果进行数据汇总形成总览表（总-分-支逐层汇总），事项反馈表单中按照各层级逐层展示反馈结果汇成总览表，表单汇总流程中增加确认节点，支持一级行确认二级行报送信息后再向上汇总，流程中支持发起人到接收人的任务催办提醒 | PC,移动端 |",
+        "| 员工赋能与规划管理 | 客户经理多维能力图谱 | 能力标签 | 涵盖专业资质（CFA/CPA 等）、产品熟悉度、行业洞察、数字化工具应用等维度，生成能力雷达图 | PC |",
+        "|  |  | 行为分析 | 统计日均触客量、商机转化率、项目储备量等数据，识别高绩效行为模式 | PC |",
+        "|  |  | 业绩分析 | 记录管户账户数、存贷款增量、中收贡献等核心指标，动态排名 | PC |",
+        "|  | 学习成长 | 能力分析 | 根据能力分析及能力雷达图推荐相应的学习课程 | PC |",
+        "|  |  | 智慧论坛赋能 | 通过文档中心（业务流程文档、业务资料清单、产品清单）、营销话术、知识共享、智能协作、成长积分、培训需求洞察四大模块，构建 “数据驱动、闭环提升” 的数字化学习生态 | PC |",
+        "| 系统管理 | 机构管理 | 新增/删除机构信息 | 机构信息的新增、删除、修改需支持手工以及同步关联系统（核心系统、人力资源系统、信贷系统等）自动更新两种模式 | PC |",
+        "|  |  | 机构信息查询 |  | PC |",
+        "|  |  | 机构信息修改 |  | PC |",
+        "|  | 用户管理 | 用户信息查询 | 用户信息的新增、删除、修改需支持手工以及同步关联系统自动更新两种模式，且维护功能按照总-分-支的权限逐级覆盖，例如支行可调整下辖用户信息 | PC |",
+        "|  |  | 创建用户 |  | PC |",
+        "|  |  | 删除用户 |  | PC |",
+        "|  |  | 修改用户信息 |  | PC |",
+        "|  | 角色管理 | 查询角色 | 角色信息的新增、删除、修改需支持手工以及同步关联系统自动更新两种模式，且维护功能按照总-分-支的权限逐级覆盖 | PC |",
+        "|  |  | 创建角色 |  | PC |",
+        "|  |  | 修改角色信息 |  | PC |",
+        "|  |  | 删除角色 |  | PC |",
+        "|  | 菜单管理 | 菜单树展示 |  | PC |",
+        "|  |  | 创建菜单 |  | PC |",
+        "|  |  | 修改菜单配置 |  | PC |",
+        "|  |  | 删除菜单 |  | PC |",
+        "|  | 角色权限管理 | 新增应用权限 |  | PC |",
+        "|  |  | 修改应用权限 |  | PC |",
+        "|  |  | 删除应用权限 |  | PC |",
+        "|  | 流程配置 | 新增审批流程 |  | PC |",
+        "|  |  | 修改审批流程信息 |  | PC |",
+        "|  |  | 删除审批流程 |  | PC |",
+        "|  |  | 审批流程查询 |  | PC |",
+        "|  |  | 新增流程节点 |  | PC |",
+        "|  |  | 删除流程节点 |  | PC |",
+        "|  |  | 修改流程节点配置 |  | PC |",
+        "|  | 参数管理 | 新增码值类参数 |  | PC |",
+        "|  |  | 修改码值类参数 |  | PC |",
+        "|  |  | 删除码值类参数 |  | PC |",
+        "|  |  | 查询码值类参数 |  | PC |",
+        "|  |  | 新增复杂类参数 |  | PC |",
+        "|  |  | 修改复杂类参数 |  | PC |",
+        "|  |  | 删除复杂类参数 |  | PC |",
+        "|  |  | 查询复杂类参数 |  | PC |",
+        "|  | 日志管理 | 查询平台运行日志 |  | PC |",
+        "|  |  | 查询登录操作日志 |  | PC |",
+        "|  |  | 查询重要功能模块使用日志 |  | PC |",
+        "| 系统安全基线 | 信息展示分级 | 多端访问安全规范 | 根据访问端展示客户差异性信息（展示内容可配置化，如移动端端展示基础信息，PC端展示全量信息） | PC,移动端 |",
+        "|  |  | 数据泄露防护 | 移动端端禁止下载客户明细数据，屏幕截图自动添加动态水印（含用户 ID 与时间水印），涉及跨境业务、特殊行业（如军工、金融同业）数据的操作需额外触发总行合规部风险审查 | 移动端 |",
+        "|  | 客户信息最小化披露 | 客户信息最小化披露 | 客户经理仅可查看管辖客户完整信息，跨机构客户、行业敏感数据等需申请后审批授权访问 | PC,移动端 |"
+    ];
+
+    // 解析数据，并记录一级功能出现顺序
+    function parseFunctionList(lines) {
+        const result = [];
+        let lastLevel1 = '', lastLevel2 = '';
+        for (let line of lines) {
+            if (!line.trim() || line.includes('---')) continue;
+            let cells = line.split('|').map(cell => cell.trim());
+            if (cells.length > 0 && cells[0] === '') cells.shift();
+            if (cells.length > 0 && cells[cells.length-1] === '') cells.pop();
+            if (cells.length < 5) continue;
+            let level1 = cells[0] || '';
+            let level2 = cells[1] || '';
+            let level3 = cells[2] || '';
+            let desc = cells[3] || '';
+            let terminal = cells[4] || '';
+            if (level1 !== '') lastLevel1 = level1;
+            if (level2 !== '') lastLevel2 = level2;
+            result.push({
+                level1: lastLevel1,
+                level2: lastLevel2,
+                level3: level3,
+                description: desc,
+                terminal: terminal
+            });
+        }
+        return result;
+    }
+
+    const allFunctions = parseFunctionList(rawTableLines);
+    let currentFiltered = [...allFunctions];
+
+    // 按一级功能分组，并保持原始顺序（按首次出现）
+    function groupByLevel1PreserveOrder(data) {
+        const groups = new Map();
+        const order = [];
+        for (const item of data) {
+            const key = item.level1;
+            if (!groups.has(key)) {
+                groups.set(key, []);
+                order.push(key);
+            }
+            groups.get(key).push(item);
+        }
+        // 返回按顺序排列的 [ [level1, items], ... ]
+        return order.map(l1 => [l1, groups.get(l1)]);
+    }
+
+    // 获取全量分组数据（用于饼图统计）
+    function getFullGroupsForPie() {
+        const fullGroups = groupByLevel1PreserveOrder(allFunctions);
+        return fullGroups.map(([l1, items]) => ({ level1: l1, count: items.length }));
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/\n/g, '<br>');
+    }
+
+    function formatTerminal(terminalStr) {
+        if (!terminalStr) return '';
+        return terminalStr.split(',').map(t => {
+            const type = t.trim();
+            if (type === '移动端') return `<span class="terminal-badge mobile">📱 移动端</span>`;
+            if (type === 'PC') return `<span class="terminal-badge pc">🖥️ PC</span>`;
+            return `<span class="terminal-badge">${escapeHtml(type)}</span>`;
+        }).join('');
+    }
+
+    // 渲染导航和内容（保持原始顺序）
+    function renderGroups(data) {
+        const groupEntries = groupByLevel1PreserveOrder(data);
+        
+        document.getElementById('resultCount').innerText = `共 ${data.length} 项功能`;
+        document.getElementById('liveCount').innerHTML = `📋 全量 ${allFunctions.length} 项功能 · 当前筛选 ${data.length}`;
+        
+        if (data.length === 0) {
+            document.getElementById('navTabs').style.display = 'none';
+            document.getElementById('groupsContainer').innerHTML = '<div class="empty-message">🔍 未找到匹配的功能，请调整搜索条件</div>';
+            return;
+        }
+        
+        // 构建导航栏
+        const navInner = document.getElementById('navInner');
+        navInner.innerHTML = '';
+        for (const [level1, items] of groupEntries) {
+            const id = `group-${level1.replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')}`;
+            const btn = document.createElement('div');
+            btn.className = 'nav-btn';
+            btn.textContent = `${level1} (${items.length})`;
+            btn.onclick = () => {
+                const target = document.getElementById(id);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            navInner.appendChild(btn);
+        }
+        document.getElementById('navTabs').style.display = 'block';
+        
+        // 构建内容区
+        const container = document.getElementById('groupsContainer');
+        let html = '';
+        for (const [level1, items] of groupEntries) {
+            const groupId = `group-${level1.replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')}`;
+            html += `<div class="function-group" id="${groupId}">`;
+            html += `<div class="group-title">📁 ${escapeHtml(level1)} <small>${items.length}项功能</small></div>`;
+            html += `<div class="table-wrapper">`;
+            html += `<table class="data-table">`;
+            html += `<thead><tr><th>二级功能</th><th>三级功能</th><th>功能说明</th><th>支持终端类型</th></tr></thead><tbody>`;
+            for (const row of items) {
+                html += `<tr>
+                            <td>${escapeHtml(row.level2)}</td>
+                            <td>${escapeHtml(row.level3)}</td>
+                            <td class="func-desc">${escapeHtml(row.description)}</td>
+                            <td>${formatTerminal(row.terminal)}</td>
+                         </tr>`;
+            }
+            html += `</tbody></table></div></div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function filterData() {
+        const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+        let filtered = allFunctions;
+        if (searchVal !== '') {
+            filtered = allFunctions.filter(item => {
+                const haystack = `${item.level1} ${item.level2} ${item.level3} ${item.description} ${item.terminal}`.toLowerCase();
+                return haystack.includes(searchVal);
+            });
+        }
+        currentFiltered = filtered;
+        renderGroups(currentFiltered);
+    }
+    
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        filterData();
+    }
+
+    let pieChart = null;
+    function drawPieChart() {
+        const groups = getFullGroupsForPie();
+        const labels = groups.map(g => g.level1);
+        const counts = groups.map(g => g.count);
+        const ctx = document.getElementById('levelPieChart').getContext('2d');
+        if (pieChart) pieChart.destroy();
+        const backgroundColors = [
+            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+        ];
+        pieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: backgroundColors.slice(0, labels.length),
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 12, font: { size: 10 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                                const percent = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value}项 (${percent}%)`;
+                            }
+                        }
+                    }
+                },
+                layout: { padding: 6 }
+            }
+        });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterData);
+    document.getElementById('clearFiltersBtn').addEventListener('click', resetFilters);
+    
+    filterData();
+    drawPieChart();
+</script>
+</body>
+</html>
